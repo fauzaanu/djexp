@@ -14,26 +14,16 @@ def setup_postgres():
     # postgres_version maybe a decimal number, so we need to convert it to an integer
     postgres_version = int(postgres_version)
     
-    # grant permission to current user to edit the file
-    os.system(f"sudo chown {os.getlogin()} /etc/postgresql/{postgres_version}/main/pg_hba.conf")
     
-    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "r") as file:
-        lines = file.readlines()
+    without_password_settings = """local   all             all                                     trust"""
 
+    
+    # create a new pg_hba.conf file allowing without password
     with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
-        for line in lines:
-            if "local" in line and "all" in line and "peer" in line:
-                file.write(line.replace("peer", "trust"))
-            else:
-                file.write(line)
-            
-            
-    
-    
-    
+        file.write(without_password_settings)
+        
     # restart postgresql
     os.system(f"sudo systemctl restart postgresql")
-    
     
     # read the .env file to get the database settings from one directory above
     db_name = ""
@@ -71,7 +61,28 @@ def setup_postgres():
     cur.execute(f"CREATE USER {db_user} WITH ENCRYPTED PASSWORD '{db_password}';")
     cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
     
+    conn.commit()
+    cur.close()
+    conn.close()
     
+    # create the pg_hba.conf file allowing with password for the new user only
+    with_password_settings = f"""local   all             {db_user}                                     md5"""
+    
+    # create a new pg_hba.conf file allowing with password for the new user only
+    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
+        file.write(with_password_settings)
+        
+    # restart postgresql
+   
+    os.system(f"sudo systemctl restart postgresql")
+    
+    # Connect to the PostgreSQL server again with the new user and database
+    conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_password)
+    
+    # Create a cursor object
+    cur = conn.cursor()
+
+    # Execute SQL statements to set the default encoding and timezone
     cur.execute(f"ALTER ROLE {db_user} SET client_encoding TO 'utf8';")
     cur.execute(f"ALTER ROLE {db_user} SET default_transaction_isolation TO 'read committed';")
     cur.execute(f"ALTER ROLE {db_user} SET timezone TO 'UTC';")
