@@ -1,0 +1,9 @@
+{
+  "devDependencies": {
+    "tailwindcss": "^3.3.1"
+  },
+  "scripts": {
+    "tailwind-watch": "tailwindcss -i ../input.css -o ../lessonplanner/static/lessonplanner/css/output.css --watch",
+    "tailwind-build": "tailwindcss -i ../input.css -o ../lessonplanner/static/lessonplanner/css/output.css --minify"
+  }
+}
