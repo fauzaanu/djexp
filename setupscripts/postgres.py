@@ -33,6 +33,10 @@ def setup_postgres():
 
     os.system("sudo apt-get install postgresql postgresql-contrib")
     print("Postgresql installed successfully!")
+    
+    
+    # if there are any existing databases, delete them
+    os.system("""sudo -u postgres psql -c 'DROP DATABASE IF EXISTS {};'""".format(db_name))
 
 
     database_name = db_name
