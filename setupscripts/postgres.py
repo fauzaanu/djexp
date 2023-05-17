@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import psycopg2
 
 def setup_postgres():
     # read the .env file to get the database settings from one directory above
