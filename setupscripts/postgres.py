@@ -2,126 +2,86 @@ import os
 import subprocess
 import sys
 import psycopg2
+from psycopg2 import sql
+import dotenv
 
-def setup_postgres():
-    
-    # edit the pg_hba.conf file to allow without password
-    
-    # get the postgres version
+def get_postgres_version():
     postgres_version = subprocess.check_output("psql --version", shell=True).decode("utf-8").split(" ")[2].split(".")[0]
     print(f"Postgres version: {postgres_version}")
-    
-    # postgres_version maybe a decimal number, so we need to convert it to an integer
-    postgres_version = int(postgres_version)
-    
-    
-    without_password_settings = """
-  # TYPE  DATABASE        USER            ADDRESS                 METHOD
-  local   all             all                                     trust
-  host    all             all             127.0.0.1/32            trust
-  host    all             all             ::1/128                 trust
-    """
+    return int(postgres_version)
 
-    
-    # create a new pg_hba.conf file allowing without password
-    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
-        file.write(without_password_settings)
-        
-    # restart postgresql
-    os.system(f"sudo systemctl restart postgresql")
-    
-    # read the .env file to get the database settings from one directory above
-    db_name = ""
-    db_user = ""
-    db_password = ""
-    db_host = ""
-    db_port = ""
-    with open("../.env", "r") as file:
-        print("Reading the .env file...")
-        lines = file.readlines()
-        
-        for line in lines:
-            if "DB_NAME" in line:
-                db_name = line.split("=")[1].strip()
-            elif "DB_USER" in line:
-                db_user = line.split("=")[1].strip()
-            elif "DB_PASSWORD" in line:
-                db_password = line.split("=")[1].strip()
-            elif "DB_HOST" in line:
-                db_host = line.split("=")[1].strip()
-            elif "DB_PORT" in line:
-                db_port = line.split("=")[1].strip()
+def read_env_file():
+    dotenv.load_dotenv(dotenv.find_dotenv())
+    db_name = os.getenv('DB_NAME')
+    db_user = os.getenv('DB_USER')
+    db_password = os.getenv('DB_PASSWORD')
+    db_host = os.getenv('DB_HOST')
+    db_port = os.getenv('DB_PORT')
+    return db_name, db_user, db_password, db_host, db_port
 
-
-    # Connect to the PostgreSQL server we dont have a user or database yet
-    conn = psycopg2.connect(host=db_host, port=db_port, user=db_user,)
-    conn.autocommit = True
-        
-
-    # Create a cursor object
+def create_database_and_user(conn, db_name, db_user, db_password):
     cur = conn.cursor()
-
-
     try:
-        # Execute SQL statements to create the database and user
-        cur.execute(f"CREATE DATABASE {db_name};")
+        cur.execute(sql.SQL("CREATE DATABASE {};").format(sql.Identifier(db_name)))
     except psycopg2.errors.DuplicateDatabase:
         print("Database already exists, skipping...")
-    
+
     try:
-        cur.execute(f"CREATE USER {db_user} WITH ENCRYPTED PASSWORD '{db_password}';")
+        create_user_query = sql.SQL("CREATE USER {} WITH ENCRYPTED PASSWORD %s;").format(sql.Identifier(db_user))
+        cur.execute(create_user_query, (db_password,))
     except psycopg2.errors.DuplicateObject:
         print("User already exists, skipping...")
-    
 
-    cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
-
-        
-    
+    cur.execute(sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
     cur.close()
-    conn.close()
-    
-    # create the pg_hba.conf file allowing with password for the new user only
-    with_password_settings = f"""
-# TYPE  DATABASE        USER            ADDRESS                 METHOD
-local   all             all                                     peer
-host    all             all             127.0.0.1/32            peer
-host    all             all             ::1/128                 scram-sha-256
-"""
-    
-    # create a new pg_hba.conf file allowing with password for the new user only
-    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
-        file.write(with_password_settings)
-        
-    # restart postgresql
-   
-    os.system(f"sudo systemctl restart postgresql")
-    
-    # Connect to the PostgreSQL server again with the new user and database
-    conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_password)
-    
-    # Create a cursor object
+
+def update_user_settings(conn, db_user):
     cur = conn.cursor()
-
-    # Execute SQL statements to set the default encoding and timezone
-    cur.execute(f"ALTER ROLE {db_user} SET client_encoding TO 'utf8';")
-    cur.execute(f"ALTER ROLE {db_user} SET default_transaction_isolation TO 'read committed';")
-    cur.execute(f"ALTER ROLE {db_user} SET timezone TO 'UTC';")
-    
-    
-
-    # Commit the changes to the database
+    cur.execute(sql.SQL("ALTER ROLE {} SET client_encoding TO 'utf8';").format(sql.Identifier(db_user)))
+    cur.execute(sql.SQL("ALTER ROLE {} SET default_transaction_isolation TO 'read committed';").format(sql.Identifier(db_user)))
+    cur.execute(sql.SQL("ALTER ROLE {} SET timezone TO 'UTC';").format(sql.Identifier(db_user)))
     conn.commit()
-
-    # Close the cursor and the connection
     cur.close()
+
+def update_pg_hba_conf(postgres_version, settings):
+    pg_hba_conf_path = f"/etc/postgresql/{postgres_version}/main/pg_hba.conf"
+    with open(pg_hba_conf_path, "w") as file:
+        file.write(settings)
+
+def setup_postgres():
+    postgres_version = get_postgres_version()
+    db_name, db_user, db_password, db_host, db_port = read_env_file()
+
+    without_password_settings = f"""\
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             {db_user}                               peer
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
+"""
+
+    update_pg_hba_conf(postgres_version, without_password_settings)
+    os.system(f"sudo systemctl restart postgresql")
+
+    conn = psycopg2.connect(host=db_host, port=db_port, user=db_user)
+    conn.autocommit = True
+    create_database_and_user(conn, db_name, db_user, db_password)
     conn.close()
-    
-    # edit the pg_hba.conf file to allow with password
-    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
-        for line in lines:
-            print("Writing original line: "+line)
-            file.write(line)
+
+    with_password_settings = f"""\
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             {db_user}                               peer
+local   all             all                                     md5
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+"""
+
+    update_pg_hba_conf(postgres_version, with_password_settings)
+    os.system(f"sudo systemctl restart postgresql")
+
+    conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_password)
+    update_user_settings(conn, db_user)
+    conn.close()
 
 
 
