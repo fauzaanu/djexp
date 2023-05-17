@@ -63,7 +63,12 @@ def setup_postgres():
 
     # Execute SQL statements to create the database and user
     cur.execute(f"CREATE DATABASE {db_name};")
-    cur.execute(f"CREATE USER {db_user} WITH ENCRYPTED PASSWORD '{db_password}';")
+    
+    try:
+        cur.execute(f"CREATE USER {db_user} WITH ENCRYPTED PASSWORD '{db_password}';")
+    except psycopg2.errors.DuplicateObject:
+        print("User already exists, skipping...")
+    
     cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
     
     conn.commit()
