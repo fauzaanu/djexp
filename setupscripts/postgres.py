@@ -15,7 +15,7 @@ def setup_postgres():
     db_password = ""
     db_host = ""
     db_port = ""
-    with open("../../.env", "r") as file:
+    with open("../.env", "r") as file:
         print("Reading the .env file...")
         lines = file.readlines()
         
