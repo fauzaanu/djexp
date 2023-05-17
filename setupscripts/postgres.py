@@ -18,8 +18,10 @@ def setup_postgres():
     os.system(f"sudo chown {os.getlogin()} /etc/postgresql/{postgres_version}/main/pg_hba.conf")
     
     original_lines = []
-    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
+    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "r") as file:
         lines = file.readlines()
+
+    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
         for line in lines:
             original_lines.append(line)
             if "local" in line and "all" in line and "peer" in line:
