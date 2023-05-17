@@ -1,15 +1,9 @@
-# this script will setup postgresql database
-
 import os
 import subprocess
 import sys
 
 def setup_postgres():
     # read the .env file to get the database settings from one directory above
-    
-
-    
-
     db_name = ""
     db_user = ""
     db_password = ""
@@ -30,68 +24,34 @@ def setup_postgres():
                 db_host = line.split("=")[1].strip()
             elif "DB_PORT" in line:
                 db_port = line.split("=")[1].strip()
-    
-                
-    # os.system("sudo apt-get install postgresql postgresql-contrib")
-    
-    subprocess.run(["sudo", "apt-get", " install", "postgresql", "postgresql-contrib"])
+
+    subprocess.run(["sudo", "apt-get", "install", "postgresql", "postgresql-contrib"])
     print("Postgresql installed successfully!")
     
-    
-    
     # if there are any existing databases, delete them
-    # os.system("""
-    #           sudo -u postgres psql -c 'DROP DATABASE IF EXISTS {};'
-    #           """.format(db_name))
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'DROP DATABASE IF EXISTS {};".format(db_name)])
-
-
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f'DROP DATABASE IF EXISTS "{db_name}";'])
+    
     database_name = db_name
     new_user = db_user
     
-    # os.system("""
-    #         sudo -u postgres createdb {}
-    #         """.format(database_name))
     subprocess.run(["sudo", "-u", "postgres", "createdb", database_name])
     
-    # os.system("""
-    #           sudo -u postgres createuser --superuser {}
-    #           """.format(new_user))
     subprocess.run(["sudo", "-u", "postgres", "createuser", "--superuser", new_user])
     
-    print("User and database created successfully!")
     db_password = db_password
-    # os.system(f"""
-    #           sudo -u postgres psql -c 'CREATE USER {db_user} WITH SUPERUSER PASSWORD '{db_password}';
-    #           """)
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'CREATE USER {} WITH SUPERUSER PASSWORD '{}';".format(db_user, db_password)])
-
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"CREATE USER {db_user} WITH SUPERUSER PASSWORD ''{db_password}'';"])
+    
+    print("User and database created successfully!")
+    
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET client_encoding TO 'utf8';"])
+    
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET default_transaction_isolation TO 'read committed';"])
+    
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET timezone TO 'UTC';"])
+    
+    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {new_user};"])
+    
     print("Please update the database settings in Project/settings.py file and run 'python manage.py migrate' to create the tables in the database.")
 
-    # recommendation by Django 
-    # ALTER ROLE dbadmin SET client_encoding TO 'utf8';
-    # ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
-    # ALTER ROLE dbadmin SET timezone TO 'UTC';
-    # os.system("""
-    #           sudo -u postgres psql -c 'ALTER ROLE {} SET client_encoding TO 'utf8';
-    #           """.format(new_user))
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'ALTER ROLE {} SET client_encoding TO 'utf8';".format(new_user)])
-    
-    # os.system("""
-    #           sudo -u postgres psql -c 'ALTER ROLE {} SET default_transaction_isolation TO 'read committed';
-    #           """.format(new_user))
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'ALTER ROLE {} SET default_transaction_isolation TO 'read committed';".format(new_user)])
-    
-    # os.system("""
-    #           sudo -u postgres psql -c 'ALTER ROLE {} SET timezone TO 'UTC';
-    #           """.format(new_user))
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'ALTER ROLE {} SET timezone TO 'UTC';".format(new_user)])
-    
-    
-    # os.system("""
-    #           sudo -u postgres psql -c 'GRANT ALL PRIVILEGES ON DATABASE {} TO {};
-    #           """.format(database_name, new_user))
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", "'GRANT ALL PRIVILEGES ON DATABASE {} TO {};".format(database_name, new_user)])
-    
 if __name__ == "__main__":
     setup_postgres()
