@@ -20,4 +20,22 @@ This process involves the following
 
 # postgres setups
 
+```bash
+sudo -u postgres psql
+CREATE DATABASE django_db;
+CREATE USER dbadmin WITH PASSWORD 'django';
+ALTER ROLE dbadmin SET client_encoding TO 'utf8';
+ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
+ALTER ROLE dbadmin SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE django_db TO dbadmin;
+\q
+```
+
+chmod +x create_db.sh
+./create_db.sh
+
 # gunicon and nginx setups
+
+```
+
+```
