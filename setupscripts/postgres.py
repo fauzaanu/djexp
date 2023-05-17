@@ -6,14 +6,16 @@ import sys
 
 def setup_postgres():
     # read the .env file to get the database settings from one directory above
-    os.system("cd ..")
-    os.system("cd ..")
+    
+
+    
+
     db_name = ""
     db_user = ""
     db_password = ""
     db_host = ""
     db_port = ""
-    with open(".env", "r") as file:
+    with open("../../.env", "r") as file:
         print("Reading the .env file...")
         lines = file.readlines()
         
