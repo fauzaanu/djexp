@@ -72,9 +72,9 @@ host    all             all             ::1/128                 trust
     with_password_settings = f"""\
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
 local   all             {db_user}                               peer
-local   all             all                                     md5
-host    all             all             127.0.0.1/32            md5
-host    all             all             ::1/128                 md5
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            peer
+host    all             all             ::1/128                 peer
 """
 
     update_pg_hba_conf(postgres_version, with_password_settings)
