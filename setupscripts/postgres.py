@@ -49,6 +49,7 @@ def create_database_and_user(conn, db_name, db_user, db_password):
             cur.execute(sql.SQL("ALTER DATABASE {} OWNER TO {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
             cur.execute(sql.SQL("REVOKE temp_user FROM {};").format(sql.Identifier(db_user)))
             cur.execute(sql.SQL("DROP USER temp_user;"))
+                
             
             
     
@@ -85,10 +86,26 @@ host    all             all             127.0.0.1/32            trust
 host    all             all             ::1/128                 trust
 """
 
+    without_password_settings_unpermitted = f"""\
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             {db_user}                               trust
+local   all             all                                     trust
+host    all             all             127.0.0.1/32            trust
+host    all             all             ::1/128                 trust
+"""
+
     update_pg_hba_conf(postgres_version, without_password_settings)
     os.system(f"sudo systemctl restart postgresql")
 
-    conn = psycopg2.connect(host=db_host, port=db_port, user=db_user)
+    try:
+        conn = psycopg2.connect(host=db_host, port=db_port, user=db_user)
+    except psycopg2.OperationalError:
+        update_pg_hba_conf(postgres_version, settings=without_password_settings_unpermitted)
+        os.system(f"sudo systemctl restart postgresql")
+        conn = psycopg2.connect(host=db_host, port=db_port, user=db_user, password=db_password)
+        
+        
+        
     conn.autocommit = True
     create_database_and_user(conn, db_name, db_user, db_password)
     conn.close()
