@@ -1,9 +1,10 @@
 # Install the nessesary packages
 
 ```bash
-sudo apt update
-sudo apt upgrade
-sudo apt install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx curl
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx curl -y
+sudo apt install python3-virtualenv -y
 ```
 
 # handle server security

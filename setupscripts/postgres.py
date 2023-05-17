@@ -3,7 +3,41 @@ import subprocess
 import sys
 import psycopg2
 
+
+
+
+
+
+
+
 def setup_postgres():
+    
+    # edit the pg_hba.conf file to allow without password
+    
+    # get the postgres version
+    postgres_version = subprocess.check_output("psql --version", shell=True).decode("utf-8").split(" ")[2].split(".")[0]
+    print(f"Postgres version: {postgres_version}")
+    
+    # postgres_version maybe a decimal number, so we need to convert it to an integer
+    postgres_version = int(postgres_version)
+    
+    original_lines = []
+    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
+        for line in lines:
+            original_lines.append(line)
+            if "local" in line and "all" in line and "peer" in line:
+                file.write(line.replace("peer", "trust"))
+            else:
+                file.write(line)
+            
+            
+    
+    
+    
+    # restart postgresql
+    os.system(f"sudo systemctl restart postgresql@{postgres_version}-main")
+    
+    
     # read the .env file to get the database settings from one directory above
     db_name = ""
     db_user = ""
@@ -27,13 +61,10 @@ def setup_postgres():
                 db_port = line.split("=")[1].strip()
 
 
-    # Connect to the PostgreSQL server
-    conn = psycopg2.connect(
-        host=db_host,
-        user=db_user,
-        password=db_password,
-        database=db_name
-    )
+    # Connect to the PostgreSQL server we dont have a user or database yet
+    conn = psycopg2.connect(host=db_host, port=db_port, user=db_user,)
+
+        
 
     # Create a cursor object
     cur = conn.cursor()
@@ -56,6 +87,11 @@ def setup_postgres():
     # Close the cursor and the connection
     cur.close()
     conn.close()
+    
+    # edit the pg_hba.conf file to allow with password
+    with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
+        for line in original_lines:
+            file.write(line)
 
 
 
