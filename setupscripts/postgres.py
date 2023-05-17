@@ -51,6 +51,7 @@ def update_pg_hba_conf(postgres_version, settings):
 def setup_postgres():
     postgres_version = get_postgres_version()
     db_name, db_user, db_password, db_host, db_port = read_env_file()
+    print(f"db_name: {db_name}", f"db_user: {db_user}", f"db_password: {db_password}", f"db_host: {db_host}", f"db_port: {db_port}", sep="\n")
 
     without_password_settings = f"""\
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
