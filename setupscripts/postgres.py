@@ -55,7 +55,7 @@ def setup_postgres():
         f"GRANT ALL PRIVILEGES ON DATABASE '{db_name}' TO '{user}';"
     ]
 
-    psql_command = f"psql -U {user} -h {host} -p {port} -c "
+    psql_command = f"sudo -u {user} psql -c "
     for command in psql_commands:
         full_command = psql_command + f"'{command}'"
         result = subprocess.run(full_command, env=env, capture_output=True, text=True)
