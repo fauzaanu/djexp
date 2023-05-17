@@ -84,9 +84,9 @@ def setup_postgres():
     # create the pg_hba.conf file allowing with password for the new user only
     with_password_settings = f"""
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-local   all             all                                     scram-sha-256
+local   all             all                                     peer
 host    all             all             127.0.0.1/32            peer
-host    all             all             ::1/128                 peer
+host    all             all             ::1/128                 scram-sha-256
 """
     
     # create a new pg_hba.conf file allowing with password for the new user only
