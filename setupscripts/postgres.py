@@ -3,13 +3,6 @@ import subprocess
 import sys
 import psycopg2
 
-
-
-
-
-
-
-
 def setup_postgres():
     
     # edit the pg_hba.conf file to allow without password
@@ -20,6 +13,9 @@ def setup_postgres():
     
     # postgres_version maybe a decimal number, so we need to convert it to an integer
     postgres_version = int(postgres_version)
+    
+    # grant permission to current user to edit the file
+    os.system(f"sudo chown {os.getlogin()} /etc/postgresql/{postgres_version}/main/pg_hba.conf")
     
     original_lines = []
     with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
