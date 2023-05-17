@@ -55,7 +55,7 @@ def setup_postgres():
 
     # Connect to the PostgreSQL server we dont have a user or database yet
     conn = psycopg2.connect(host=db_host, port=db_port, user=db_user,)
-
+    conn.autocommit = True
         
 
     # Create a cursor object
