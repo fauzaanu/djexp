@@ -36,11 +36,20 @@ def setup_postgres():
 
     database_name = db_name
     new_user = db_user
-    os.system("sudo -u postgres createdb {}".format(database_name))
-    os.system("sudo -u postgres createuser --superuser {}".format(new_user))
+    
+    os.system("""
+            sudo -u postgres createdb {}
+            """.format(database_name))
+    
+    os.system("""
+              sudo -u postgres createuser --superuser {}
+              """.format(new_user))
+    
     print("User and database created successfully!")
     db_password = db_password
-    os.system(f"sudo -u postgres psql -c 'CREATE USER {db_user} WITH SUPERUSER PASSWORD '{db_password}';")
+    os.system(f"""
+              sudo -u postgres psql -c 'CREATE USER {db_user} WITH SUPERUSER PASSWORD '{db_password}';
+              """)
 
     print("Please update the database settings in Project/settings.py file and run 'python manage.py migrate' to create the tables in the database.")
 
@@ -48,10 +57,22 @@ def setup_postgres():
     # ALTER ROLE dbadmin SET client_encoding TO 'utf8';
     # ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
     # ALTER ROLE dbadmin SET timezone TO 'UTC';
-    os.system("sudo -u postgres psql -c 'ALTER ROLE {} SET client_encoding TO 'utf8';".format(new_user))
-    os.system("sudo -u postgres psql -c 'ALTER ROLE {} SET default_transaction_isolation TO 'read committed';".format(new_user))
-    os.system("sudo -u postgres psql -c 'ALTER ROLE {} SET timezone TO 'UTC';".format(new_user))
-    os.system("sudo -u postgres psql -c 'GRANT ALL PRIVILEGES ON DATABASE {} TO {};".format(database_name, new_user))
+    os.system("""
+              sudo -u postgres psql -c 'ALTER ROLE {} SET client_encoding TO 'utf8';
+              """.format(new_user))
+    
+    os.system("""
+              sudo -u postgres psql -c 'ALTER ROLE {} SET default_transaction_isolation TO 'read committed';
+              """.format(new_user))
+    
+    os.system("""
+              sudo -u postgres psql -c 'ALTER ROLE {} SET timezone TO 'UTC';
+              """.format(new_user))
+    
+    
+    os.system("""
+              sudo -u postgres psql -c 'GRANT ALL PRIVILEGES ON DATABASE {} TO {};
+              """.format(database_name, new_user))
     
 if __name__ == "__main__":
     setup_postgres()
