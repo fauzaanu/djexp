@@ -37,10 +37,13 @@ def create_database_and_user(conn, db_name, db_user, db_password):
             cur.execute(sql.SQL("DROP USER {};").format(sql.Identifier(db_user)))
             cur.execute(create_user_query, (db_password,))
         except psycopg2.errors.ObjectInUse:
-            # delete connections to user and recreate
-            cur.execute(sql.SQL("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = %s AND pid <> pg_backend_pid();"), (db_user,))
+            # delete user forcefully and recreate user
+            cur.execute(sql.SQL("ALTER USER {} NOLOGIN;").format(sql.Identifier(db_user)))
             cur.execute(sql.SQL("DROP USER {};").format(sql.Identifier(db_user)))
             cur.execute(create_user_query, (db_password,))
+    
+
+            
         
 
     cur.execute(sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
