@@ -37,10 +37,20 @@ def create_database_and_user(conn, db_name, db_user, db_password):
             cur.execute(sql.SQL("DROP USER {};").format(sql.Identifier(db_user)))
             cur.execute(create_user_query, (db_password,))
         except psycopg2.errors.ObjectInUse:
-            # delete user forcefully and recreate user
-            cur.execute(sql.SQL("ALTER USER {} NOLOGIN;").format(sql.Identifier(db_user)))
+            # current user cannot be dropped, so we have to create a new user and drop the current one
+            cur.execute(sql.SQL("CREATE USER temp_user WITH PASSWORD %s;").format(sql.Identifier(db_user)))
+            cur.execute(sql.SQL("GRANT temp_user TO {};").format(sql.Identifier(db_user)))
+            cur.execute(sql.SQL("REVOKE ALL PRIVILEGES ON DATABASE {} FROM {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
+            cur.execute(sql.SQL("ALTER DATABASE {} OWNER TO temp_user;").format(sql.Identifier(db_name)))
             cur.execute(sql.SQL("DROP USER {};").format(sql.Identifier(db_user)))
+            cur.execute(sql.SQL("ALTER USER temp_user RENAME TO {};").format(sql.Identifier(db_user)))
             cur.execute(create_user_query, (db_password,))
+            cur.execute(sql.SQL("GRANT ALL PRIVILEGES ON DATABASE {} TO {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
+            cur.execute(sql.SQL("ALTER DATABASE {} OWNER TO {};").format(sql.Identifier(db_name), sql.Identifier(db_user)))
+            cur.execute(sql.SQL("REVOKE temp_user FROM {};").format(sql.Identifier(db_user)))
+            cur.execute(sql.SQL("DROP USER temp_user;"))
+            
+            
     
 
             
