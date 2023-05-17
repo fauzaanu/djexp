@@ -45,14 +45,6 @@ def setup_postgres():
         **os.environ
     }
     
-    result = subprocess.run(createdb_command, env=env, capture_output=True, text=True)
-
-    # Check if the command was successful
-    if result.returncode == 0:
-        print("Database created successfully")
-    else:
-        print(f"Error creating database: {result.stderr}")
-
     # Execute the psql commands using subprocess
     psql_commands = [
         f"CREATE DATABASE {db_name};",
