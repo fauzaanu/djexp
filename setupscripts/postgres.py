@@ -27,7 +27,7 @@ def create_database_and_user(conn, db_name, db_user, db_password):
         print("Database already exists, skipping...")
 
     try:
-        create_user_query = sql.SQL("CREATE USER {} WITH ENCRYPTED PASSWORD %s;").format(sql.Identifier(db_user))
+        create_user_query = sql.SQL("CREATE USER {} WITH PASSWORD %s;").format(sql.Identifier(db_user))
         cur.execute(create_user_query, (db_password,))
     except psycopg2.errors.DuplicateObject:
         print("User already exists, skipping...")
@@ -71,7 +71,7 @@ host    all             all             ::1/128                 trust
 
     with_password_settings = f"""\
 # TYPE  DATABASE        USER            ADDRESS                 METHOD
-local   all             {db_user}                               md5
+local   all             {db_user}                               peer
 local   all             all                                     md5
 host    all             all             127.0.0.1/32            md5
 host    all             all             ::1/128                 md5
