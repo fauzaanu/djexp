@@ -25,6 +25,14 @@ def setup_postgres():
             elif "DB_PORT" in line:
                 db_port = line.split("=")[1].strip()
 
+
+    print("DB_NAME: ", db_name)
+    print("DB_USER: ", db_user)
+    print("DB_PASSWORD: ", db_password)
+    print("DB_HOST: ", db_host)
+    print("DB_PORT: ", db_port)
+
+
     subprocess.run(["sudo", "apt-get", "install", "postgresql", "postgresql-contrib"])
     print("Postgresql installed successfully!")
     
