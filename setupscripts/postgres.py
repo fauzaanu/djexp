@@ -45,12 +45,6 @@ def setup_postgres():
         **os.environ
     }
     
-    # create the user first with password
-    createuser_command = ["createuser", "-U", user, "-h", host, "-p", port, "-s", "-P", password]
-    
-
-    # Execute the createdb command using subprocess
-    createdb_command = ["createdb", "-U", user, "-h", host, "-p", port, db_name]
     result = subprocess.run(createdb_command, env=env, capture_output=True, text=True)
 
     # Check if the command was successful
@@ -61,9 +55,11 @@ def setup_postgres():
 
     # Execute the psql commands using subprocess
     psql_commands = [
-        f"ALTER ROLE  {user} SET client_encoding TO 'utf8';",
-        f"ALTER ROLE  {user} SET default_transaction_isolation TO 'read committed';",
-        f"ALTER ROLE  {user} SET timezone TO 'UTC';",
+        f"CREATE DATABASE {db_name};",
+        f"CREATE USER {user} WITH PASSWORD '{password}';"
+        f"ALTER ROLE {user} SET client_encoding TO 'utf8';",
+        f"ALTER ROLE {user} SET default_transaction_isolation TO 'read committed';",
+        f"ALTER ROLE {user} SET timezone TO 'UTC';",
         f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {user};"
     ]
 
