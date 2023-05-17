@@ -6,7 +6,7 @@ import sys
 
 def setup_postgres():
     # read the .env file to get the database settings from one directory above
-    os.chdir("..")
+    os.system("cd ..")
     db_name = ""
     db_user = ""
     db_password = ""
