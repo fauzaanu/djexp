@@ -26,48 +26,36 @@ def setup_postgres():
                 db_port = line.split("=")[1].strip()
 
 
-    print("DB_NAME: ", db_name)
-    print("DB_USER: ", db_user)
-    print("DB_PASSWORD: ", db_password)
-    print("DB_HOST: ", db_host)
-    print("DB_PORT: ", db_port)
+    # Connect to the PostgreSQL server
+    conn = psycopg2.connect(
+        host=db_host,
+        user=db_user,
+        password=db_password,
+        database=db_name
+    )
 
-    # Define your PostgreSQL connection information
-    db_name = db_name
-    user = db_user
-    password = db_password
-    host = db_host
-    port = db_port
+    # Create a cursor object
+    cur = conn.cursor()
 
-    # Set the necessary environment variables for PostgreSQL authentication
-    env = {
-        "PGPASSWORD": password,
-        **os.environ
-    }
+    # Execute SQL statements to create the database and user
+    cur.execute(f"CREATE DATABASE {db_name};")
+    cur.execute(f"CREATE USER {db_user} WITH ENCRYPTED PASSWORD '{db_password}';")
+    cur.execute(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {db_user};")
     
-    # Execute the psql commands using subprocess
-    psql_commands = [
-        f"CREATE DATABASE '{db_name}';",
-        f"CREATE USER '{user}' WITH PASSWORD '{password}';"
-        f"ALTER ROLE '{user}' SET client_encoding TO 'utf8';",
-        f"ALTER ROLE '{user}' SET default_transaction_isolation TO 'read committed';",
-        f"ALTER ROLE '{user}' SET timezone TO 'UTC';",
-        f"GRANT ALL PRIVILEGES ON DATABASE '{db_name}' TO '{user}';"
-    ]
+    
+    cur.execute(f"ALTER ROLE {db_user} SET client_encoding TO 'utf8';")
+    cur.execute(f"ALTER ROLE {db_user} SET default_transaction_isolation TO 'read committed';")
+    cur.execute(f"ALTER ROLE {db_user} SET timezone TO 'UTC';")
+    
+    
 
-    psql_command = f"sudo -u {user} psql -c "
-    for command in psql_commands:
-        full_command = psql_command + f"'{command}'"
-        result = subprocess.run(full_command, env=env, capture_output=True, text=True)
-        if result.returncode == 0:
-            print(f"Command executed successfully: {command}")
-        else:
-            print(f"Error executing command: {command}\n{result.stderr}")
+    # Commit the changes to the database
+    conn.commit()
 
-    if all(result.returncode == 0 for result in results):
-        print("PostgreSQL setup completed successfully")
-    else:
-        print("PostgreSQL setup completed with errors")
+    # Close the cursor and the connection
+    cur.close()
+    conn.close()
+
 
 
 if __name__ == "__main__":
