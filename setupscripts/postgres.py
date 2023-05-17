@@ -32,32 +32,52 @@ def setup_postgres():
     print("DB_HOST: ", db_host)
     print("DB_PORT: ", db_port)
 
+    # Define your PostgreSQL connection information
+    db_name = db_name
+    user = db_user
+    password = db_password
+    host = db_host
+    port = db_port
 
-    subprocess.run(["sudo", "apt-get", "install", "postgresql", "postgresql-contrib"])
-    print("Postgresql installed successfully!")
-    
-    # if there are any existing databases, delete them
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f'DROP DATABASE IF EXISTS "{db_name}";'])
-    
+    # Set the necessary environment variables for PostgreSQL authentication
+    env = {
+        "PGPASSWORD": password,
+        **os.environ
+    }
 
-    subprocess.run(["sudo", "-u", db_user, "createdb", db_name])
-    
-    subprocess.run(["sudo", "-u", db_user, "createuser", "--superuser", db_user])
-    
-    db_password = db_password
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"CREATE USER {db_user} WITH SUPERUSER PASSWORD ''{db_password}'';"])
-    
-    print("User and database created successfully!")
-    
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET client_encoding TO 'utf8';"])
-    
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET default_transaction_isolation TO 'read committed';"])
-    
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET timezone TO 'UTC';"])
-    
-    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {db_user};"])
-    
-    print("Please update the database settings in Project/settings.py file and run 'python manage.py migrate' to create the tables in the database.")
+    # Execute the createdb command using subprocess
+    createdb_command = ["createdb", "-U", user, "-h", host, "-p", port, db_name]
+    result = subprocess.run(createdb_command, env=env, capture_output=True, text=True)
+
+    # Check if the command was successful
+    if result.returncode == 0:
+        print("Database created successfully")
+    else:
+        print(f"Error creating database: {result.stderr}")
+
+    # Execute the psql commands using subprocess
+    psql_commands = [
+        f"CREATE USER dbadmin WITH PASSWORD '{password}';",
+        f"ALTER ROLE dbadmin SET client_encoding TO 'utf8';",
+        f"ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';",
+        f"ALTER ROLE dbadmin SET timezone TO 'UTC';",
+        f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO dbadmin;"
+    ]
+    psql_command = f"psql -U {user} -h {host} -p {port} -c "
+    for command in psql_commands:
+        full_command = psql_command + f"'{command}'"
+        result = subprocess.run(full_command, env=env, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"Command executed successfully: {command}")
+        else:
+            print(f"Error executing command: {command}\n{result.stderr}")
+
+    # Check if the commands were successful
+    if all(result.returncode == 0 for result in results):
+        print("PostgreSQL setup completed successfully")
+    else:
+        print("PostgreSQL setup completed with errors")
+
 
 if __name__ == "__main__":
     setup_postgres()
