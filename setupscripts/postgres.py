@@ -15,7 +15,12 @@ def setup_postgres():
     postgres_version = int(postgres_version)
     
     
-    without_password_settings = """local   all             all                                     trust"""
+    without_password_settings = """
+  # TYPE  DATABASE        USER            ADDRESS                 METHOD
+  local   all             all                                     trust
+  host    all             all             127.0.0.1/32            trust
+  host    all             all             ::1/128                 trust
+    """
 
     
     # create a new pg_hba.conf file allowing without password
@@ -66,7 +71,12 @@ def setup_postgres():
     conn.close()
     
     # create the pg_hba.conf file allowing with password for the new user only
-    with_password_settings = f"""local   all             {db_user}                                     md5"""
+    with_password_settings = f"""
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+local   all             all                                     md5
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+"""
     
     # create a new pg_hba.conf file allowing with password for the new user only
     with open(f"/etc/postgresql/{postgres_version}/main/pg_hba.conf", "w") as file:
