@@ -47,12 +47,12 @@ def setup_postgres():
     
     # Execute the psql commands using subprocess
     psql_commands = [
-        f"CREATE DATABASE {db_name};",
-        f"CREATE USER {user} WITH PASSWORD '{password}';"
-        f"ALTER ROLE {user} SET client_encoding TO 'utf8';",
-        f"ALTER ROLE {user} SET default_transaction_isolation TO 'read committed';",
-        f"ALTER ROLE {user} SET timezone TO 'UTC';",
-        f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {user};"
+        f"CREATE DATABASE '{db_name}';",
+        f"CREATE USER '{user}' WITH PASSWORD '{password}';"
+        f"ALTER ROLE '{user}' SET client_encoding TO 'utf8';",
+        f"ALTER ROLE '{user}' SET default_transaction_isolation TO 'read committed';",
+        f"ALTER ROLE '{user}' SET timezone TO 'UTC';",
+        f"GRANT ALL PRIVILEGES ON DATABASE '{db_name}' TO '{user}';"
     ]
 
     psql_command = f"psql -U {user} -h {host} -p {port} -c "
