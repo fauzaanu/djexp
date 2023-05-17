@@ -34,7 +34,7 @@ def setup_postgres():
     
     
     # restart postgresql
-    os.system(f"sudo systemctl restart postgresql@{postgres_version}-main")
+    os.system(f"sudo systemctl restart postgresql")
     
     
     # read the .env file to get the database settings from one directory above
