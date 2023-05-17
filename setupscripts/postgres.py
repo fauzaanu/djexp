@@ -44,6 +44,10 @@ def setup_postgres():
         "PGPASSWORD": password,
         **os.environ
     }
+    
+    # create the user first with password
+    createuser_command = ["createuser", "-U", user, "-h", host, "-p", port, "-s", "-P", password]
+    
 
     # Execute the createdb command using subprocess
     createdb_command = ["createdb", "-U", user, "-h", host, "-p", port, db_name]
@@ -57,12 +61,12 @@ def setup_postgres():
 
     # Execute the psql commands using subprocess
     psql_commands = [
-        f"CREATE USER dbadmin WITH PASSWORD '{password}';",
-        f"ALTER ROLE dbadmin SET client_encoding TO 'utf8';",
-        f"ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';",
-        f"ALTER ROLE dbadmin SET timezone TO 'UTC';",
-        f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO dbadmin;"
+        f"ALTER ROLE  {user} SET client_encoding TO 'utf8';",
+        f"ALTER ROLE  {user} SET default_transaction_isolation TO 'read committed';",
+        f"ALTER ROLE  {user} SET timezone TO 'UTC';",
+        f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {user};"
     ]
+
     psql_command = f"psql -U {user} -h {host} -p {port} -c "
     for command in psql_commands:
         full_command = psql_command + f"'{command}'"
@@ -72,7 +76,6 @@ def setup_postgres():
         else:
             print(f"Error executing command: {command}\n{result.stderr}")
 
-    # Check if the commands were successful
     if all(result.returncode == 0 for result in results):
         print("PostgreSQL setup completed successfully")
     else:
