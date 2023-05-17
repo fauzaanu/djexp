@@ -69,6 +69,12 @@ def update_user_settings(conn, db_user):
     cur.close()
 
 def update_pg_hba_conf(postgres_version, settings):
+    
+    # get the permission to write to the postgres directory
+    subprocess.run(f"sudo chmod 777 /etc/postgresql/{postgres_version}/main/pg_hba.conf", shell=True)
+        
+    
+    
     pg_hba_conf_path = f"/etc/postgresql/{postgres_version}/main/pg_hba.conf"
     with open(pg_hba_conf_path, "w") as file:
         file.write(settings)
@@ -97,14 +103,9 @@ host    all             all             ::1/128                 trust
     update_pg_hba_conf(postgres_version, without_password_settings)
     os.system(f"sudo systemctl restart postgresql")
 
-    try:
-        conn = psycopg2.connect(host=db_host, port=db_port, user=db_user)
-    except psycopg2.OperationalError:
-        update_pg_hba_conf(postgres_version, settings=without_password_settings_unpermitted)
-        os.system(f"sudo systemctl restart postgresql")
-        conn = psycopg2.connect(host=db_host, port=db_port, user=db_user, password=db_password)
-        
-        
+
+    conn = psycopg2.connect(host=db_host, port=db_port, user=db_user)
+
         
     conn.autocommit = True
     create_database_and_user(conn, db_name, db_user, db_password)
