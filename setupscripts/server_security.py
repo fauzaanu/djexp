@@ -1,12 +1,9 @@
 import os
 
-
-
 new_user = input("Enter a new username: ")
 os.system("sudo adduser {}".format(new_user))
 os.system("sudo usermod -aG sudo {}".format(new_user))
 print(f"User {new_user} created and given root permissions successfully!")
-
 
 os.system("sudo ufw allow OpenSSH")
 os.system("sudo ufw enable")
