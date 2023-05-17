@@ -29,27 +29,25 @@ def setup_postgres():
     print("Postgresql installed successfully!")
     
     # if there are any existing databases, delete them
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f'DROP DATABASE IF EXISTS "{db_name}";'])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f'DROP DATABASE IF EXISTS "{db_name}";'])
     
-    database_name = db_name
-    new_user = db_user
+
+    subprocess.run(["sudo", "-u", db_user, "createdb", db_name])
     
-    subprocess.run(["sudo", "-u", "postgres", "createdb", database_name])
-    
-    subprocess.run(["sudo", "-u", "postgres", "createuser", "--superuser", new_user])
+    subprocess.run(["sudo", "-u", db_user, "createuser", "--superuser", db_user])
     
     db_password = db_password
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"CREATE USER {db_user} WITH SUPERUSER PASSWORD ''{db_password}'';"])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"CREATE USER {db_user} WITH SUPERUSER PASSWORD ''{db_password}'';"])
     
     print("User and database created successfully!")
     
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET client_encoding TO 'utf8';"])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET client_encoding TO 'utf8';"])
     
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET default_transaction_isolation TO 'read committed';"])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET default_transaction_isolation TO 'read committed';"])
     
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"ALTER ROLE {new_user} SET timezone TO 'UTC';"])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"ALTER ROLE {db_user} SET timezone TO 'UTC';"])
     
-    subprocess.run(["sudo", "-u", "postgres", "psql", "-c", f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {new_user};"])
+    subprocess.run(["sudo", "-u", db_user, "psql", "-c", f"GRANT ALL PRIVILEGES ON DATABASE {database_name} TO {db_user};"])
     
     print("Please update the database settings in Project/settings.py file and run 'python manage.py migrate' to create the tables in the database.")
 
