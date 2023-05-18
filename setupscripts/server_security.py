@@ -1,3 +1,7 @@
+# before the git clone you should have run this script.abs(
+# This is just here as a reference
+
+
 import os
 
 new_user = input("Enter a new username: ")

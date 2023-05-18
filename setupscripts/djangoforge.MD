@@ -5,11 +5,19 @@ sudo apt update -y
 sudo apt upgrade -y
 sudo apt install python3-pip python3-dev libpq-dev postgresql postgresql-contrib nginx curl -y
 sudo apt install python3-virtualenv -y
+sudo apt install supervisor -y
+sudo apt install nodejs npm -y
 ```
 
 # handle server security
 
-# postgres setups
+# postgres setups (Or run create_db.sh)
+
+<!-- make the sh file executable -->
+
+```bash
+chmod +x create_db.sh
+```
 
 <!-- set .env variables -->
 
@@ -27,12 +35,6 @@ GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
 
 # Intial Django Setup
 
-sudo ufw allow 8000
-python3 manage.py migrate
-python3 manage.py collectstatic
-python3 manage.py createsuperuser
-python3 manage.py runserver
-
 # gunicon and nginx setups
 
 gunicorn --bind 0.0.0.0:8000 Project.wsgi
@@ -48,11 +50,14 @@ file /run/gunicorn.sock
 sudo mv /setupscripts/Project /etc/nginx/sites-available/Project
 sudo ln -s /etc/nginx/sites-available/Project /etc/nginx/sites-enabled
 sudo nano /etc/nginx/nginx.conf
-client_max_body_size 20M;
 sudo nginx -t
 sudo systemctl restart nginx
 sudo ufw delete allow 8000
 sudo ufw allow 'Nginx Full'
 sudo systemctl restart nginx
+
+# Optional tasks
+
+client_max_body_size 20M;
 
 # supervisord setups
