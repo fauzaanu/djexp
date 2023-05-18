@@ -9,33 +9,50 @@ sudo apt install python3-virtualenv -y
 
 # handle server security
 
-This process involves the following
-
-- Creating a new user
-- Granting the new user sudo privileges
-- Setting up a basic firewall
-- Setting up SSH key-based authentication
-- Disabling password authentication
-- Disabling remote root login
-
 # postgres setups
 
+<!-- set .env variables -->
+
 ```bash
+export $(cat .env | xargs)
 sudo -u postgres psql
-CREATE DATABASE django_db;
-CREATE USER dbadmin WITH PASSWORD 'django';
-ALTER ROLE dbadmin SET client_encoding TO 'utf8';
-ALTER ROLE dbadmin SET default_transaction_isolation TO 'read committed';
-ALTER ROLE dbadmin SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE django_db TO dbadmin;
+CREATE DATABASE $DB_NAME;
+CREATE USER $DB_USER WITH PASSWORD $DB_PASS;
+ALTER ROLE $DB_USER SET client_encoding TO 'utf8';
+ALTER ROLE $DB_USER SET default_transaction_isolation TO 'read committed';
+ALTER ROLE $DB_USER SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE $DB_NAME TO $DB_USER;
 \q
 ```
 
-chmod +x create_db.sh
-./create_db.sh
+# Intial Django Setup
+
+sudo ufw allow 8000
+python3 manage.py migrate
+python3 manage.py collectstatic
+python3 manage.py createsuperuser
+python3 manage.py runserver
 
 # gunicon and nginx setups
 
-```
+gunicorn --bind 0.0.0.0:8000 Project.wsgi
+sudo mv /setupscripts/gunicorn.socket /etc/systemd/system/gunicorn.socket
+sudo mv /setupscripts/gunicorn.service /etc/systemd/system/gunicorn.service
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
+sudo systemctl status gunicorn.socket
+file /run/gunicorn.sock
 
-```
+### NGINX
+
+sudo mv /setupscripts/Project /etc/nginx/sites-available/Project
+sudo ln -s /etc/nginx/sites-available/Project /etc/nginx/sites-enabled
+sudo nano /etc/nginx/nginx.conf
+client_max_body_size 20M;
+sudo nginx -t
+sudo systemctl restart nginx
+sudo ufw delete allow 8000
+sudo ufw allow 'Nginx Full'
+sudo systemctl restart nginx
+
+# supervisord setups
